@@ -50,9 +50,9 @@ public class JavaScriptTransformerTest extends TestCase {
 
 		t.returnType = JavaScriptTransformer.ReturnType.NUMBER;
 		object = t.transform(null)[0];
-		assertEquals("2.0", object.toString());
-		assertEquals(Double.class, object.getClass());
-		
+		assertTrue(object instanceof Number);
+		assertEquals(2, object);
+
 		assertEquals(Number.class, t.getOutputColumns().getColumnType(0));
 	}
 

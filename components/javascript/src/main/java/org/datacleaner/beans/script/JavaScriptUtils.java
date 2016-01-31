@@ -19,6 +19,8 @@
  */
 package org.datacleaner.beans.script;
 
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
+import jdk.nashorn.api.scripting.ScriptUtils;
 import org.datacleaner.api.InputColumn;
 import org.datacleaner.api.InputRow;
 import org.datacleaner.util.ReflectionUtils;
@@ -27,6 +29,8 @@ import org.mozilla.javascript.NativeArray;
 import org.mozilla.javascript.Scriptable;
 import org.mozilla.javascript.ScriptableObject;
 
+import javax.script.*;
+
 /**
  * Various utility methods for dealing with JavaScript (Mozilla Rhino)
  * 
@@ -34,7 +38,9 @@ import org.mozilla.javascript.ScriptableObject;
  */
 final class JavaScriptUtils {
 
-	private JavaScriptUtils() {
+    public static final String SCRIPTTYPE = "nashorn";
+
+    private JavaScriptUtils() {
 		// prevent instantiation
 	}
 
@@ -45,11 +51,10 @@ final class JavaScriptUtils {
 	 * @param object
 	 * @param names
 	 */
-	public static void addToScope(Scriptable scope, Object object, String... names) {
-		Object jsObject = Context.javaToJS(object, scope);
+	public static void addToScope(Bindings scope, Object object, String... names) {
 		for (String name : names) {
 			name = name.replaceAll(" ", "_");
-			ScriptableObject.putProperty(scope, name, jsObject);
+			scope.put(name, object);
 		}
 	}
 
@@ -61,27 +66,28 @@ final class JavaScriptUtils {
 	 * @param columns
 	 * @param arrayName
 	 */
-	public static void addToScope(Scriptable scope, InputRow inputRow, InputColumn<?>[] columns, String arrayName) {
-		NativeArray values = new NativeArray(columns.length * 2);
+	public static void addToScope(Bindings scope, InputRow inputRow, InputColumn<?>[] columns, String arrayName) {
+        Object[] values = new Object[columns.length];
+
 		for (int i = 0; i < columns.length; i++) {
 			InputColumn<?> column = columns[i];
 			Object value = inputRow.getValue(column);
 
-			if (value != null) {
-				Class<?> dataType = column.getDataType();
-				if (ReflectionUtils.isNumber(dataType)) {
-					value = Context.toNumber(value);
-				} else if (ReflectionUtils.isBoolean(dataType)) {
-					value = Context.toBoolean(value);
-				}
-			}
+			values[i] = value;
 
-			values.put(i, values, value);
-			values.put(column.getName(), values, value);
-
+			// TODO: Ew! Why?
 			addToScope(scope, value, column.getName(), column.getName().toLowerCase(), column.getName().toUpperCase());
 		}
 
 		addToScope(scope, values, arrayName);
 	}
+
+    public static CompiledScript compileScript(ScriptEngine scriptEngine, String sourceCode) {
+        Compilable compilableScriptEngine = (Compilable) scriptEngine;
+        try {
+            return compilableScriptEngine.compile(sourceCode);
+        } catch (ScriptException e) {
+            throw new IllegalArgumentException("Script is not proper JavaScript", e);
+        }
+    }
 }

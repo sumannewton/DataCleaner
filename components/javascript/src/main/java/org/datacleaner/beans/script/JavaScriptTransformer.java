@@ -1,16 +1,16 @@
 /**
  * DataCleaner (community edition)
  * Copyright (C) 2014 Neopost - Customer Information Management
- *
+ * <p>
  * This copyrighted material is made available to anyone wishing to use, modify,
  * copy, or redistribute it subject to the terms and conditions of the GNU
  * Lesser General Public License, as published by the Free Software Foundation.
- *
+ * <p>
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
  * for more details.
- *
+ * <p>
  * You should have received a copy of the GNU Lesser General Public License
  * along with this distribution; if not, write to:
  * Free Software Foundation, Inc.
@@ -19,29 +19,17 @@
  */
 package org.datacleaner.beans.script;
 
-import javax.inject.Named;
-
-import org.datacleaner.api.Alias;
-import org.datacleaner.api.Categorized;
-import org.datacleaner.api.Configured;
-import org.datacleaner.api.Description;
-import org.datacleaner.api.Initialize;
-import org.datacleaner.api.InputColumn;
-import org.datacleaner.api.InputRow;
-import org.datacleaner.api.OutputColumns;
-import org.datacleaner.api.StringProperty;
-import org.datacleaner.api.Transformer;
+import jdk.nashorn.api.scripting.ScriptUtils;
+import org.datacleaner.api.*;
 import org.datacleaner.components.categories.ScriptingCategory;
-import org.mozilla.javascript.Context;
-import org.mozilla.javascript.ContextFactory;
-import org.mozilla.javascript.Script;
-import org.mozilla.javascript.Scriptable;
-import org.mozilla.javascript.ScriptableObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Named;
+import javax.script.*;
+
 /**
- * A transformer that uses userwritten JavaScript to generate a value
+ * A transformer that uses user-written JavaScript to generate a value
  */
 @Named("JavaScript transformer (simple)")
 @Alias("JavaScript transformer")
@@ -49,97 +37,91 @@ import org.slf4j.LoggerFactory;
 @Categorized(ScriptingCategory.class)
 public class JavaScriptTransformer implements Transformer {
 
-	private static final Logger logger = LoggerFactory
-			.getLogger(JavaScriptTransformer.class);
+    private static final Logger logger = LoggerFactory
+            .getLogger(JavaScriptTransformer.class);
 
-	public static enum ReturnType {
-		STRING, NUMBER, BOOLEAN;
-	}
+    public enum ReturnType {STRING, NUMBER, BOOLEAN}
 
-	@Configured
-	InputColumn<?>[] columns;
+    @Provided
+    ComponentContext componentContext;
 
-	@Configured
-	ReturnType returnType = ReturnType.STRING;
+    @Configured
+    InputColumn<?>[] columns;
 
-	@Configured
-	@Description("Available variables:\nvalues[0..]: Array of values\nvalues[\"my_col\"]: Map of values\nmy_col: Each column value has it's own variable\nout: Print to console using out.println('hello')\nlog: Print to log using log.info(...), log.warn(...), log.error(...)")
-	@StringProperty(multiline = true, mimeType = { "text/javascript",
-			"application/x-javascript" })
-	String sourceCode = "function eval() {\n\treturn \"hello \" + values[0];\n}\n\neval();";
+    @Configured
+    ReturnType returnType = ReturnType.STRING;
 
-	private ContextFactory _contextFactory;
-	private Script _script;
+    @Configured
+    @Description("Available variables:\nvalues[0..]: Array of values\nvalues[\"my_col\"]: Map of values\nmy_col: Each column value has it's own variable\nout: Print to console using out.println('hello')\nlog: Print to log using log.info(...), log.warn(...), log.error(...)")
+    @StringProperty(multiline = true, mimeType = {"text/javascript",
+            "application/x-javascript"})
+    String sourceCode = "function eval() {\n\treturn \"hello \" + values[0];\n}\n\neval();";
 
-	// this scope is shared between all threads
-	private ScriptableObject _sharedScope;
+    private ScriptEngine _scriptEngine;
+    private CompiledScript _script;
 
-	@Override
-	public OutputColumns getOutputColumns() {
-		OutputColumns outputColumns = new OutputColumns(Object.class, "JavaScript output");
-		if (returnType == ReturnType.NUMBER) {
-			outputColumns.setColumnType(0, Number.class);
-		} else if (returnType == ReturnType.BOOLEAN) {
-			outputColumns.setColumnType(0, Boolean.class);
-		} else {
-			outputColumns.setColumnType(0, String.class);
-		}
-		return outputColumns;
-	}
+    public JavaScriptTransformer() {
+        ScriptEngineManager _scriptEngineManager = new ScriptEngineManager();
+        _scriptEngine = _scriptEngineManager.getEngineByName(JavaScriptUtils.SCRIPTTYPE);
+    }
 
-	@Initialize
-	public void init() {
-		_contextFactory = new ContextFactory();
-		Context context = _contextFactory.enterContext();
+    @Override
+    public OutputColumns getOutputColumns() {
+        OutputColumns outputColumns = new OutputColumns(Object.class, "JavaScript output");
+        if (returnType == ReturnType.NUMBER) {
+            outputColumns.setColumnType(0, Number.class);
+        } else if (returnType == ReturnType.BOOLEAN) {
+            outputColumns.setColumnType(0, Boolean.class);
+        } else {
+            outputColumns.setColumnType(0, String.class);
+        }
+        return outputColumns;
+    }
 
-		try {
-			_script = context.compileString(sourceCode, this.getClass()
-					.getSimpleName(), 1, null);
-			_sharedScope = context.initStandardObjects();
+    @Validate
+    void validate() {
+        JavaScriptUtils.compileScript(_scriptEngine, sourceCode);
+    }
 
-			JavaScriptUtils.addToScope(_sharedScope, logger, "logger", "log");
-			JavaScriptUtils.addToScope(_sharedScope, System.out, "out");
-		} finally {
-			Context.exit();
-		}
-	}
+    @Initialize
+    public void init() {
+        _scriptEngine.getContext().setAttribute("logger", logger, ScriptContext.GLOBAL_SCOPE);
+        _scriptEngine.getContext().setAttribute("log", logger, ScriptContext.GLOBAL_SCOPE);
+        _scriptEngine.getContext().setAttribute("out", System.out, ScriptContext.GLOBAL_SCOPE);
+        _script = JavaScriptUtils.compileScript(_scriptEngine, sourceCode);
+    }
 
-	@Override
-	public Object[] transform(InputRow inputRow) {
-		Context context = _contextFactory.enterContext();
+    @Override
+    public Object[] transform(InputRow inputRow) {
+        ScriptContext context = new SimpleScriptContext();
+        context.setBindings(_scriptEngine.createBindings(), ScriptContext.ENGINE_SCOPE);
+        context.setBindings(_scriptEngine.getBindings(ScriptContext.GLOBAL_SCOPE), ScriptContext.GLOBAL_SCOPE);
+        Bindings localScope = context.getBindings(ScriptContext.ENGINE_SCOPE);
 
-		try {
+        JavaScriptUtils.addToScope(localScope, inputRow, columns, "values");
 
-			// this scope is local to the execution of a single row
-			Scriptable scope = context.newObject(_sharedScope);
-			scope.setPrototype(_sharedScope);
-			scope.setParentScope(null);
+        Object result = null;
+        try {
+            result = _script.eval(context);
+        } catch (ScriptException e) {
+            componentContext.publishMessage(new ExecutionLogMessage("Error occurred while transforming row " + inputRow.getId()));
+        }
 
-			JavaScriptUtils.addToScope(scope, inputRow, columns, "values");
+        if (returnType == ReturnType.NUMBER) {
+            result = ScriptUtils.convert(result, Number.class);
+        } else if (returnType == ReturnType.BOOLEAN) {
+            result = ScriptUtils.convert(result, Boolean.class);
+        } else {
+            result = ScriptUtils.convert(result, String.class);
+        }
+        return new Object[]{result};
+    }
 
-			Object result = _script.exec(context, scope);
-			// String stringResult = Context.toString(result);
+    public void setSourceCode(String sourceCode) {
+        this.sourceCode = sourceCode;
+    }
 
-			if (result == null) {
-				result = null;
-			} else if (returnType == ReturnType.NUMBER) {
-				result = Context.toNumber(result);
-			} else if (returnType == ReturnType.BOOLEAN) {
-				result = Context.toBoolean(result);
-			} else {
-				result = Context.toString(result);
-			}
-			return new Object[] { result };
-		} finally {
-			Context.exit();
-		}
-	}
-
-	public void setSourceCode(String sourceCode) {
-		this.sourceCode = sourceCode;
-	}
-
-	public void setColumns(InputColumn<?>[] columns) {
-		this.columns = columns;
-	}
+    public void setColumns(InputColumn<?>[] columns) {
+        this.columns = columns;
+    }
 }
