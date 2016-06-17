@@ -254,16 +254,20 @@ public class ComponentControllerV1 {
         inputRewriterController.rewriteStatelessInput(compDesc, processStatelessInput);
 
         ComponentHandler handler = componentHandlerFactory.createComponent(tenantContext, decodedName, processStatelessInput.configuration);
-        ProcessStatelessOutput output = new ProcessStatelessOutput();
-        OutputStyle outputStyleEnum = OutputStyle.forString(outputStyle);
-        output.rows = getOutputJsonNode(handler, handler.runComponent(processStatelessInput.data, _maxBatchSize), outputStyleEnum);
-        output.result = getJsonNode(handler.closeComponent());
+        try {
+            ProcessStatelessOutput output = new ProcessStatelessOutput();
+            OutputStyle outputStyleEnum = OutputStyle.forString(outputStyle);
+            output.rows = getOutputJsonNode(handler, handler.runComponent(processStatelessInput.data, _maxBatchSize), outputStyleEnum);
+            output.result = getJsonNode(handler.closeComponent());
 
-        if(outputColumnsInfo) {
-            output.columns = createOutputColumns(handler.getOutputColumns()).getColumns();
+            if(outputColumnsInfo) {
+                output.columns = createOutputColumns(handler.getOutputColumns()).getColumns();
+            }
+
+            return output;
+        } finally {
+            handler.closeComponent();
         }
-
-        return output;
     }
 
     private OutputColumns createOutputColumns(org.datacleaner.api.OutputColumns outCols) {
