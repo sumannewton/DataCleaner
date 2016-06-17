@@ -23,17 +23,22 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.metamodel.util.Action;
+import org.datacleaner.api.HasAnalyzerResult;
 import org.datacleaner.configuration.DataCleanerConfiguration;
 import org.datacleaner.configuration.DataCleanerConfigurationImpl;
 import org.datacleaner.configuration.DataCleanerEnvironmentImpl;
 import org.datacleaner.job.AnalysisJob;
 import org.datacleaner.job.HasFilterOutcomes;
 import org.datacleaner.job.builder.AnalysisJobBuilder;
+import org.datacleaner.job.builder.ComponentBuilder;
 import org.datacleaner.job.concurrent.SingleThreadedTaskRunner;
 import org.datacleaner.util.IconUtils;
 import org.datacleaner.util.PreviewUtils;
+import org.datacleaner.util.SourceColumnFinder;
 import org.datacleaner.util.WidgetFactory;
 import org.datacleaner.util.WidgetUtils;
 import org.datacleaner.windows.AnalysisJobBuilderWindow;
@@ -154,12 +159,35 @@ public class ExecuteButtonOptions {
                     final AnalysisJobBuilder jobBuilderCopy = new AnalysisJobBuilder(
                             analysisJobBuilder.getConfiguration(), jobCopy);
 
+                    final Set<ComponentBuilder> analyzers =
+                            jobBuilderCopy.getComponentBuilders().stream().filter(o -> o instanceof HasAnalyzerResult)
+                                    .collect(Collectors.toSet());
 
-                    final boolean alreadyFiltered =
-                            jobBuilderCopy.getComponentBuilders().stream().filter(o -> o instanceof HasFilterOutcomes)
-                                    .findAny().isPresent();
+                    SourceColumnFinder scf = new SourceColumnFinder();
+                    scf.addSources(jobBuilderCopy);
 
-                    executeAction.run(PreviewUtils.limitJobRows(jobBuilderCopy, alreadyFiltered, maxRows));
+                    final Set<ComponentBuilder> filtered =
+                            analyzers.stream().filter(acb -> scf.findAllSourceJobs(acb).stream().filter(
+                                    o -> o instanceof HasFilterOutcomes).findAny().isPresent())
+                                    .collect(Collectors.toSet());
+
+                    if (filtered.size() == 0) {
+                        PreviewUtils.limitJobRows(jobBuilderCopy, jobBuilderCopy.getComponentBuilders(), maxRows);
+                    } else {
+                        PreviewUtils.limitJobRows(jobBuilderCopy, jobBuilderCopy.getFilterComponentBuilders(), maxRows);
+
+                        final Set<ComponentBuilder> unfilteredSources =
+                                analyzers.stream().filter(acb -> !scf.findAllSourceJobs(acb).stream().filter(
+                                        o -> o instanceof HasFilterOutcomes).findAny().isPresent())
+                                        .flatMap(acb -> scf.findAllSourceJobs(acb).stream())
+                                        .map(s -> (ComponentBuilder) s).collect(Collectors.toSet());
+
+                        PreviewUtils.limitJobRows(jobBuilderCopy, unfilteredSources, maxRows);
+
+                    }
+
+
+                    executeAction.run(jobBuilderCopy);
                 }
             }
         });

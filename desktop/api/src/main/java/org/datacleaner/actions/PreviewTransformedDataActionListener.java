@@ -21,6 +21,7 @@ package org.datacleaner.actions;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -35,6 +36,7 @@ import org.datacleaner.descriptors.Descriptors;
 import org.datacleaner.job.HasFilterOutcomes;
 import org.datacleaner.job.builder.AnalysisJobBuilder;
 import org.datacleaner.job.builder.AnalyzerComponentBuilder;
+import org.datacleaner.job.builder.ComponentBuilder;
 import org.datacleaner.job.builder.TransformerComponentBuilder;
 import org.datacleaner.job.runner.AnalysisResultFuture;
 import org.datacleaner.job.runner.AnalysisRunner;
@@ -166,7 +168,6 @@ public final class PreviewTransformedDataActionListener implements ActionListene
                     _transformerJobBuilder);
             return null;
         }
-        
 
         // add the result collector (a dummy analyzer)
         final AnalyzerComponentBuilder<PreviewTransformedDataAnalyzer> rowCollector = ajb.addAnalyzer(Descriptors
@@ -177,10 +178,18 @@ public final class PreviewTransformedDataActionListener implements ActionListene
             rowCollector.setComponentRequirement(tjb.getComponentRequirement());
         }
 
-        final AnalysisJobBuilder previewJobBuilder =
-                PreviewUtils.limitJobRows(ajb.getRootJobBuilder(), alreadyFiltered, _previewRows);
+        final AnalysisJobBuilder rootJobBuilder = ajb.getRootJobBuilder();
+        final Collection<? extends ComponentBuilder> componentBuilders;
+        if (alreadyFiltered) {
+            // if there are already filters in place, only apply the max rows filter on the other filters.
+            componentBuilders = rootJobBuilder.getFilterComponentBuilders();
+        } else {
+            componentBuilders = rootJobBuilder.getComponentBuilders();
+        }
 
-        return new PreviewJob(previewJobBuilder, rowCollector, tjb);
+        PreviewUtils.limitJobRows(rootJobBuilder, componentBuilders, _previewRows);
+
+        return new PreviewJob(rootJobBuilder, rowCollector, tjb);
     }
 
     @Override

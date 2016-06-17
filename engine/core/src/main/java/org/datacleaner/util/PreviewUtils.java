@@ -41,54 +41,50 @@ public class PreviewUtils {
 
     public static final String METADATA_PROPERTY_MARKER = "org.datacleaner.preview.targetcomponent";
 
-    public static AnalysisJobBuilder limitJobRows(final AnalysisJobBuilder rootJobBuilder,
-            final boolean alreadyFiltered, final int previewRows) {
+    public static void limitJobRows(final AnalysisJobBuilder jobBuilder,
+            final Collection<? extends ComponentBuilder> componentBuilders, final int previewRows) {
         {
             final SourceColumnFinder sourceColumnFinder = new SourceColumnFinder();
-            sourceColumnFinder.addSources(rootJobBuilder);
-            final List<Table> sourceTables = rootJobBuilder.getSourceTables();
+            sourceColumnFinder.addSources(jobBuilder);
+            final List<Table> sourceTables = jobBuilder.getSourceTables();
             final int maxRows = Double.valueOf(Math.ceil(((double) previewRows) / sourceTables.size())).intValue();
             for (Table table : sourceTables) {
-                final FilterComponentBuilder<MaxRowsFilter, MaxRowsFilter.Category> maxRowFilter = rootJobBuilder
-                        .addFilter(MaxRowsFilter.class);
-                maxRowFilter.setName(PreviewUtils.class.getName() + "-" + table.getName() + "-MaxRows");
-                maxRowFilter.getComponentInstance().setMaxRows(maxRows);
-                maxRowFilter.getComponentInstance().setApplyOrdering(false);
-                maxRowFilter.getComponentInstance().setOrderColumn(rootJobBuilder.getSourceColumnsOfTable(table).get(
-                        0));
-                final Collection<? extends ComponentBuilder> componentBuilders;
-                if (alreadyFiltered) {
-                    // if there are already filters in place, only apply the max rows filter on the other filters.
-                    componentBuilders = rootJobBuilder.getFilterComponentBuilders();
-                } else {
-                    componentBuilders = rootJobBuilder.getComponentBuilders();
-                }
+                final String filterName = PreviewUtils.class.getName() + "-" + table.getName() + "-MaxRows";
 
-                for (ComponentBuilder componentBuilder : componentBuilders) {
-                    if (componentBuilder != maxRowFilter) {
-                        final InputColumn<?>[] input = componentBuilder.getInput();
-                        if (input.length > 0) {
-                            if (componentBuilder.getDescriptor().isMultiStreamComponent() || sourceColumnFinder
-                                    .findOriginatingTable(input[0]) == table) {
-                                final ComponentRequirement existingRequirement = componentBuilder
-                                        .getComponentRequirement();
-                                if (existingRequirement != null) {
-                                    if (componentBuilder.getDescriptor().isMultiStreamComponent()) {
-                                        componentBuilder.setComponentRequirement(new CompoundComponentRequirement(
-                                                existingRequirement, maxRowFilter.getFilterOutcome(
-                                                MaxRowsFilter.Category.VALID)));
-                                    }
-                                } else {
-                                    componentBuilder.setComponentRequirement(new SimpleComponentRequirement(maxRowFilter
-                                            .getFilterOutcome(MaxRowsFilter.Category.VALID)));
+                final FilterComponentBuilder<?, ?> maxRowFilter =
+                        jobBuilder.getFilterComponentBuilderByName(filterName).orElseGet(() -> {
+                            final FilterComponentBuilder<MaxRowsFilter, MaxRowsFilter.Category> filter = jobBuilder
+                                    .addFilter(MaxRowsFilter.class);
+                            filter.setName(filterName);
+                            filter.getComponentInstance().setMaxRows(maxRows);
+                            filter.getComponentInstance().setApplyOrdering(false);
+                            filter.getComponentInstance()
+                                    .setOrderColumn(jobBuilder.getSourceColumnsOfTable(table).get(0));
+                            return filter;
+                        });
+
+                componentBuilders.stream().filter(cb -> cb != maxRowFilter).forEach(componentBuilder -> {
+                    final InputColumn<?>[] input = componentBuilder.getInput();
+                    if (input.length > 0) {
+                        if (componentBuilder.getDescriptor().isMultiStreamComponent() || sourceColumnFinder
+                                .findOriginatingTable(input[0]) == table) {
+                            final ComponentRequirement existingRequirement = componentBuilder
+                                    .getComponentRequirement();
+                            if (existingRequirement != null) {
+                                if (componentBuilder.getDescriptor().isMultiStreamComponent()) {
+                                    componentBuilder.setComponentRequirement(new CompoundComponentRequirement(
+                                            existingRequirement, maxRowFilter.getFilterOutcome(
+                                            MaxRowsFilter.Category.VALID)));
                                 }
+                            } else {
+                                componentBuilder.setComponentRequirement(new SimpleComponentRequirement(maxRowFilter
+                                        .getFilterOutcome(MaxRowsFilter.Category.VALID)));
                             }
                         }
                     }
-                }
+                });
             }
         }
-        return rootJobBuilder;
     }
 
     public static AnalysisJobBuilder copy(final AnalysisJobBuilder original) {
