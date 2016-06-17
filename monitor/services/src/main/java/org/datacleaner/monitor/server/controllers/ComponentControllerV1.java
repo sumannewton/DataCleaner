@@ -66,6 +66,7 @@ import org.datacleaner.monitor.server.components.ComponentHandlerFactory;
 import org.datacleaner.monitor.server.components.InputRewriterController;
 import org.datacleaner.monitor.shared.ComponentNotAllowed;
 import org.datacleaner.monitor.shared.ComponentNotFoundException;
+import org.datacleaner.restclient.ComponentConfiguration;
 import org.datacleaner.restclient.ComponentList;
 import org.datacleaner.restclient.ComponentsRestClientUtils;
 import org.datacleaner.restclient.CreateInput;
@@ -219,6 +220,10 @@ public class ComponentControllerV1 {
         String decodedName = ComponentsRestClientUtils.unescapeComponentName(name);
         logger.debug("Informing about output columns of '{}'", decodedName);
         TenantContext tenantContext = _tenantContextFactory.getContext(tenant);
+        // We don't require "configuration" field if request JSON if the client doesn't want any configuration
+        if(createInput.configuration == null) {
+            createInput.configuration = new ComponentConfiguration();
+        }
         ComponentHandler handler = componentHandlerFactory.createComponent(tenantContext, decodedName, createInput.configuration);
         try {
             return createOutputColumns(handler.getOutputColumns());
