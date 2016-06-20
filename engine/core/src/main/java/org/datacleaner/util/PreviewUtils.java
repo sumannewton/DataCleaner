@@ -30,6 +30,7 @@ import org.datacleaner.components.maxrows.MaxRowsFilter;
 import org.datacleaner.job.AnalysisJob;
 import org.datacleaner.job.ComponentRequirement;
 import org.datacleaner.job.CompoundComponentRequirement;
+import org.datacleaner.job.HasFilterOutcomes;
 import org.datacleaner.job.SimpleComponentRequirement;
 import org.datacleaner.job.builder.AnalysisJobBuilder;
 import org.datacleaner.job.builder.AnalyzerComponentBuilder;
@@ -167,5 +168,10 @@ public class PreviewUtils {
         }
 
         return null;
+    }
+
+    public static boolean hasFilterPresent(final SourceColumnFinder scf, final ComponentBuilder acb) {
+        return scf.findAllSourceJobs(acb).stream().filter(
+                o -> o instanceof HasFilterOutcomes).findAny().isPresent();
     }
 }

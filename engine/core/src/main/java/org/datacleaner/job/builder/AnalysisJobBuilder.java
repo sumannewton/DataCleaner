@@ -652,7 +652,7 @@ public final class AnalysisJobBuilder implements Closeable {
     }
 
     public Optional<FilterComponentBuilder<?, ?>> getFilterComponentBuilderByName(String name) {
-        return _filterComponentBuilders.stream().filter(f -> f.getName().equals(name)).findFirst();
+        return _filterComponentBuilders.stream().filter(f -> f.getName() != null && f.getName().equals(name)).findFirst();
     }
 
     public <A extends Analyzer<?>> AnalyzerComponentBuilder<A> addAnalyzer(AnalyzerDescriptor<A> descriptor) {
