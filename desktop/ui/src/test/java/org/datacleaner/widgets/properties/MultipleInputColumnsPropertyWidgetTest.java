@@ -129,7 +129,49 @@ public class MultipleInputColumnsPropertyWidgetTest extends TestCase {
             assertEquals("\"Hello #{name}\",foo,bar,\"Hi #{nickname}\"", getAvailableCheckBoxValues(widget));
         }
     }
+    
+    public void testAddAndRemoveInputColumns() throws Exception {
+        DataCleanerConfiguration configuration = new DataCleanerConfigurationImpl();
 
+        try (AnalysisJobBuilder ajb = new AnalysisJobBuilder(configuration)) {
+
+            ajb.addSourceColumn(new MutableColumn("foo", ColumnType.VARCHAR));
+            MutableColumn column = new MutableColumn("bar", ColumnType.VARCHAR);
+			ajb.addSourceColumn(column);
+
+            AnalyzerComponentBuilder<StringAnalyzer> beanJobBuilder = ajb.addAnalyzer(StringAnalyzer.class);
+            ConfiguredPropertyDescriptor property = beanJobBuilder.getDescriptor().getConfiguredPropertiesForInput()
+                    .iterator().next();
+
+            // initialize with a expression column
+            MultipleInputColumnsPropertyWidget widget = new MultipleInputColumnsPropertyWidget(beanJobBuilder, property);
+            widget.onPanelAdd();
+            InputColumn<?>[] value = new InputColumn[] { new ELInputColumn("Hello #{name}") };
+            widget.initialize(null);
+
+            // add another available column
+			ajb.addSourceColumn(new MutableColumn("foobar", ColumnType.VARCHAR));
+
+            widget.selectAll();
+            value = widget.getValue();
+            assertEquals("[MetaModelInputColumn[foo], MetaModelInputColumn[bar], MetaModelInputColumn[foobar]]", Arrays.toString(value));
+            assertEquals("foo,bar,foobar", getAvailableCheckBoxValues(widget));
+
+            // select another column
+            widget.setValue(new InputColumn[] { ajb.getSourceColumnByName("bar") });
+            widget.setValue(new InputColumn[] { ajb.getSourceColumnByName("foobar") });
+            value = widget.getValue();
+            assertEquals("[MetaModelInputColumn[foobar]]", Arrays.toString(value));
+            assertEquals("foo,bar,foobar", getAvailableCheckBoxValues(widget));
+            
+            ajb.removeSourceColumn(column); 
+
+            value = widget.getValue();
+            assertEquals("[MetaModelInputColumn[foobar]]", Arrays.toString(value));
+            assertEquals("foo,foobar", getAvailableCheckBoxValues(widget));
+        }
+    }
+    
     public void testInitializeReordered() throws Exception {
         DataCleanerConfiguration configuration = new DataCleanerConfigurationImpl();
 
