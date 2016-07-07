@@ -161,7 +161,6 @@ public class AnalyzerResultPanel extends DCPanel implements Scrollable {
 
                 BorderLayout layout = (BorderLayout) getLayout();
                 remove(layout.getLayoutComponent(BorderLayout.CENTER));
-                System.out.println("BLABLABLABLABLABLABLAB3");
                 add(component, BorderLayout.CENTER);
 
                 updateUI();
