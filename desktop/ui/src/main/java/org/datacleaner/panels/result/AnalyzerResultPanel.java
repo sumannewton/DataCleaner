@@ -127,6 +127,7 @@ public class AnalyzerResultPanel extends DCPanel implements Scrollable {
                 return component;
             }
 
+            @Override
             protected void done() {
                 JComponent component;
                 try {
@@ -158,7 +159,9 @@ public class AnalyzerResultPanel extends DCPanel implements Scrollable {
                     component = panel;
                 }
 
-                remove(_loadingIcon);
+                BorderLayout layout = (BorderLayout) getLayout();
+                remove(layout.getLayoutComponent(BorderLayout.CENTER));
+                System.out.println("BLABLABLABLABLABLABLAB3");
                 add(component, BorderLayout.CENTER);
 
                 updateUI();
