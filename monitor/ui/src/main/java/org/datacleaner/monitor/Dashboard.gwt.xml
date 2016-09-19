@@ -21,7 +21,7 @@
 
 -->
 <module rename-to='dashboard'>
-	
+	<inherits name="com.google.gwt.logging.Logging"/>
 	<inherits name="org.datacleaner.monitor.Widgets"/>
 	
 	<inherits name="com.googlecode.gflot.GFlot" />
