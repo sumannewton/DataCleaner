@@ -60,7 +60,9 @@ public class AlertDefinition implements Serializable, Comparable<AlertDefinition
 
     public MetricIdentifier getMetricIdentifier() {
         if (_metricIdentifier == null) {
-            return new MetricIdentifier();
+            final MetricIdentifier metricIdentifier = new MetricIdentifier();
+            metricIdentifier.setGroupName("no-group"); 
+            return metricIdentifier;
         }
         return _metricIdentifier;
     }

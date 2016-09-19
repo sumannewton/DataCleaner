@@ -62,8 +62,8 @@ public class DashboardServiceImplTest extends TestCase {
         final TimelineDefinition timeline = new TimelineDefinition();
         timeline.setJobIdentifier(new JobIdentifier("my job"));
         final List<MetricIdentifier> metrics = new ArrayList<>();
-        final MetricIdentifier metric = new MetricIdentifier("my metric", "Pattern finder", null, "PRODUCTCODE",
-                "Pattern count", null, null, false, false);
+        final MetricIdentifier metric = new MetricIdentifier("my group", "my metric", "Pattern finder", null, 
+                "PRODUCTCODE", "Pattern count", null, null, false, false);
         metrics.add(metric);
         timeline.setMetrics(metrics);
 

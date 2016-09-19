@@ -34,6 +34,7 @@ public class MetricIdentifier implements Serializable, Comparable<MetricIdentifi
 
     private static final long serialVersionUID = 1L;
 
+    private String _groupName;
     private String _analyzerDescriptorName;
     private String _analyzerName;
     private String _analyzerInputName;
@@ -48,9 +49,10 @@ public class MetricIdentifier implements Serializable, Comparable<MetricIdentifi
     private List<MetricIdentifier> _children;
 
     // full constructor that specifies every field in one go.
-    public MetricIdentifier(String metricDisplayName, String analyzerDescriptorName, String analyzerName,
-            String analyzerInputName, String metricDescriptorName, String paramQueryString, String paramColumnName,
-            boolean parameterizedByQueryString, boolean parameterizedByColumnName) {
+    public MetricIdentifier(String groupName, String metricDisplayName, String analyzerDescriptorName, 
+            String analyzerName, String analyzerInputName, String metricDescriptorName, String paramQueryString, 
+            String paramColumnName, boolean parameterizedByQueryString, boolean parameterizedByColumnName) {
+        _groupName = groupName;
         _metricDisplayName = metricDisplayName;
         _analyzerDescriptorName = analyzerDescriptorName;
         _analyzerName = analyzerName;
@@ -62,7 +64,9 @@ public class MetricIdentifier implements Serializable, Comparable<MetricIdentifi
         _parameterizedByColumnName = parameterizedByColumnName;
     }
 
-    public MetricIdentifier(String metricDisplayName, String formula, List<MetricIdentifier> children) {
+    public MetricIdentifier(String groupName, String metricDisplayName, String formula, 
+            List<MetricIdentifier> children) {
+        _groupName = groupName;
         _metricDisplayName = metricDisplayName;
         _formula = formula;
         _children = children;
@@ -70,6 +74,10 @@ public class MetricIdentifier implements Serializable, Comparable<MetricIdentifi
 
     // no-arg constructor used by GWT
     public MetricIdentifier() {
+    }
+    
+    public void setGroupName(String groupName) {
+        _groupName = groupName;
     }
 
     @JsonIgnore
@@ -219,13 +227,14 @@ public class MetricIdentifier implements Serializable, Comparable<MetricIdentifi
                 MetricIdentifier childCopy = child.copy();
                 children.add(childCopy);
             }
-            final MetricIdentifier metricIdentifier = new MetricIdentifier(_metricDisplayName, _formula, children);
+            final MetricIdentifier metricIdentifier = new MetricIdentifier(_groupName, _metricDisplayName, _formula, 
+                    children);
             return metricIdentifier;
         }
 
-        final MetricIdentifier metricIdentifier = new MetricIdentifier(_metricDisplayName, _analyzerDescriptorName,
-                _analyzerName, _analyzerInputName, _metricDescriptorName, _paramQueryString, _paramColumnName,
-                _parameterizedByQueryString, _parameterizedByColumnName);
+        final MetricIdentifier metricIdentifier = new MetricIdentifier(_groupName, _metricDisplayName, 
+                _analyzerDescriptorName, _analyzerName, _analyzerInputName, _metricDescriptorName, _paramQueryString, 
+                _paramColumnName, _parameterizedByQueryString, _parameterizedByColumnName);
         return metricIdentifier;
     }
 

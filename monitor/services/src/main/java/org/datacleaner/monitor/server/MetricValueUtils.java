@@ -502,6 +502,7 @@ public class MetricValueUtils {
 
         for (MetricDescriptor metricDescriptor : metricDescriptors) {
             final MetricIdentifier metricIdentifier = new MetricIdentifier();
+            metricIdentifier.setGroupName("no-group");
             metricIdentifier.setAnalyzerDescriptorName(componentJob.getDescriptor().getDisplayName());
             metricIdentifier.setAnalyzerName(componentJob.getName());
             if (identifyingInputColumn != null) {

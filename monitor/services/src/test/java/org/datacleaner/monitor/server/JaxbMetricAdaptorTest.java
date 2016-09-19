@@ -37,10 +37,10 @@ import org.datacleaner.monitor.shared.model.MetricIdentifier;
 
 public class JaxbMetricAdaptorTest extends TestCase {
 
-    private final MetricIdentifier metric1 = new MetricIdentifier("Null strings", "String analyzer", null,
+    private final MetricIdentifier metric1 = new MetricIdentifier("My group", "Null strings", "String analyzer", null,
             "My strings", "Null count", null, "My strings", false, true);
-    private final MetricIdentifier metric2 = new MetricIdentifier(null, "Number analyzer", null, "My numbers",
-            "Null count", null, "My numbers", false, true);
+    private final MetricIdentifier metric2 = new MetricIdentifier("My group", null, "Number analyzer", null, 
+            "My numbers", "Null count", null, "My numbers", false, true);
 
     public void testSerializeSingleMetric() throws Exception {
         TimelineDefinition timelineDefinition = new TimelineDefinition();
@@ -66,7 +66,7 @@ public class JaxbMetricAdaptorTest extends TestCase {
     }
 
     public void testSerializeFormulaMetric() throws Exception {
-        final MetricIdentifier formulaMetricIdentifier = new MetricIdentifier("My formula metric",
+        final MetricIdentifier formulaMetricIdentifier = new MetricIdentifier("My group", "My formula metric",
                 "Null strings / Null count", Arrays.asList(metric1, metric2));
 
         TimelineDefinition timelineDefinition = new TimelineDefinition();
