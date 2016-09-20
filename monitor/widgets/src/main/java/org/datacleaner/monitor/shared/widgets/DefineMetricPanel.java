@@ -223,7 +223,7 @@ public class DefineMetricPanel extends FlowPanel {
                 validateFormulaChildMetric(childMetric);
                 children.add(childMetric);
             }
-            return new MetricIdentifier(formula, formula, children);
+            return new MetricIdentifier("", formula, formula, children);
         } else {
             return _selectMetricPanels.get(0).getMetric();
         }

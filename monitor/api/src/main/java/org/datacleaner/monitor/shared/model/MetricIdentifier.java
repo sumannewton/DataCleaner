@@ -76,6 +76,10 @@ public class MetricIdentifier implements Serializable, Comparable<MetricIdentifi
     public MetricIdentifier() {
     }
     
+    public String getGroupName() {
+        return _groupName;
+    }
+    
     public void setGroupName(String groupName) {
         _groupName = groupName;
     }
@@ -99,9 +103,9 @@ public class MetricIdentifier implements Serializable, Comparable<MetricIdentifi
             sb.append("]");
             return _formula + "_" + sb;
         }
-        String ID = _analyzerDescriptorName + _analyzerInputName + _analyzerName + _metricDescriptorName
+        String ID = _groupName + _analyzerDescriptorName + _analyzerInputName + _analyzerName + _metricDescriptorName
                 + _paramColumnName + _paramQueryString;
-        return ID.replaceAll("'", "");
+        return ID.replaceAll("'", "").replaceAll(" ", "_");
     }
 
     public String getAnalyzerDescriptorName() {
@@ -258,6 +262,7 @@ public class MetricIdentifier implements Serializable, Comparable<MetricIdentifi
     public int hashCode() {
         final int prime = 31;
         int result = 1;
+        result = prime * result + ((_groupName == null) ? 0 : _groupName.hashCode());
         result = prime * result + ((_analyzerDescriptorName == null) ? 0 : _analyzerDescriptorName.hashCode());
         result = prime * result + ((_analyzerInputName == null) ? 0 : _analyzerInputName.hashCode());
         result = prime * result + ((_analyzerName == null) ? 0 : _analyzerName.hashCode());
@@ -358,6 +363,9 @@ public class MetricIdentifier implements Serializable, Comparable<MetricIdentifi
      * @return
      */
     public boolean equalsIgnoreParameterValues(MetricIdentifier other) {
+        return getId().equals(other.getId());
+        
+        /*
         if (this == other)
             return true;
         if (other == null)
@@ -398,6 +406,7 @@ public class MetricIdentifier implements Serializable, Comparable<MetricIdentifi
         if (_parameterizedByQueryString != other._parameterizedByQueryString)
             return false;
         return true;
+        */
     }
 
     /**
@@ -413,6 +422,8 @@ public class MetricIdentifier implements Serializable, Comparable<MetricIdentifi
      * @return
      */
     public boolean equalsIgnoreCustomizedDetails(MetricIdentifier other) {
+        return getId().equals(other.getId());
+        /*
         if (!equalsIgnoreParameterValues(other)) {
             return false;
         }
@@ -429,6 +440,7 @@ public class MetricIdentifier implements Serializable, Comparable<MetricIdentifi
             return false;
 
         return true;
+        */
     }
 
     @Override

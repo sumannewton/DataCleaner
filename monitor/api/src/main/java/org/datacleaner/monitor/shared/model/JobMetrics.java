@@ -54,6 +54,10 @@ public class JobMetrics implements Serializable {
     }
 
     public void setMetricGroups(List<MetricGroup> metricGroups) {
+        for (MetricGroup group : metricGroups) {
+            group.injectGroupNameIntoMetrics();
+        }
+        
         _metricGroups = metricGroups;
     }
 

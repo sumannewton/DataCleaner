@@ -61,7 +61,7 @@ public class AlertDefinition implements Serializable, Comparable<AlertDefinition
     public MetricIdentifier getMetricIdentifier() {
         if (_metricIdentifier == null) {
             final MetricIdentifier metricIdentifier = new MetricIdentifier();
-            metricIdentifier.setGroupName("no-group"); 
+            metricIdentifier.setGroupName("no-group"); // mytodo
             return metricIdentifier;
         }
         return _metricIdentifier;

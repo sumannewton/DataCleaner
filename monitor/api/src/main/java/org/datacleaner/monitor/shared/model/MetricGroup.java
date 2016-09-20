@@ -48,6 +48,7 @@ public class MetricGroup implements Serializable {
 
     public void setMetrics(List<MetricIdentifier> metrics) {
         _metrics = metrics;
+        injectGroupNameIntoMetrics();
     }
 
     public List<String> getColumnNames() {
@@ -79,5 +80,13 @@ public class MetricGroup implements Serializable {
             }
         }
         return false;
+    }
+    
+    public void injectGroupNameIntoMetrics() {
+        for (MetricIdentifier metricIdentifier : _metrics) {
+            if (metricIdentifier.getGroupName() == null || metricIdentifier.getGroupName().isEmpty()) {
+                metricIdentifier.setGroupName(_name);
+            }
+        }
     }
 }

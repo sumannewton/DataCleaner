@@ -21,6 +21,8 @@ package org.datacleaner.monitor.dashboard.widgets;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.datacleaner.monitor.dashboard.DashboardServiceAsync;
 import org.datacleaner.monitor.shared.model.JobIdentifier;
@@ -41,6 +43,7 @@ import com.google.gwt.user.client.ui.Widget;
  * Presenter for metrics that are parameterizable by a user defined string.
  */
 public class StringParameterizedMetricPresenter implements MetricPresenter {
+    private static final Logger logger = Logger.getLogger("StringParameterizedMetricPresenter");
 
     private final MetricIdentifier _metricIdentifier;
     private final List<MetricIdentifier> _activeMetrics;
@@ -108,8 +111,13 @@ public class StringParameterizedMetricPresenter implements MetricPresenter {
         _panel.add(addButton);
 
         for (MetricIdentifier activeMetric : activeMetrics) {
+            logger.log(Level.SEVERE, "_metricIdentifier: " + _metricIdentifier.getId());
+            logger.log(Level.SEVERE, "activeMetric: " + activeMetric.getId());
             if (activeMetric.equalsIgnoreParameterValues(_metricIdentifier)) {
+                logger.log(Level.SEVERE, "equals");
                 addMetricPanel(activeMetric);
+            } else {
+                logger.log(Level.SEVERE, "not-equals");
             }
         }
 
@@ -126,8 +134,14 @@ public class StringParameterizedMetricPresenter implements MetricPresenter {
 
     private MetricIdentifier isActiveMetric(MetricIdentifier metric) {
         for (MetricIdentifier activeMetric : _activeMetrics) {
-            if (activeMetric.equalsIgnoreCustomizedDetails(metric)) {
+            logger.log(Level.SEVERE, "metric: " + metric.getId());
+            logger.log(Level.SEVERE, "activeMetric: " + activeMetric.getId());
+            //if (activeMetric.equalsIgnoreCustomizedDetails(metric)) {
+            if (activeMetric.getId().equals(metric.getId())) {
+                logger.log(Level.SEVERE, "equals");
                 return activeMetric;
+            } else {
+                logger.log(Level.SEVERE, "not-equals");
             }
         }
         return null;
