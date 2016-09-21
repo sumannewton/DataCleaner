@@ -65,7 +65,7 @@
             <input ref="col_firstname" name="Column"/>
             <input ref="col_username" name="Column"/>
         </analyzer>
-        <analyzer requires="outcome_1">
+        <analyzer requires="outcome_1" name="INVALID">
             <descriptor ref="Pattern finder"/>
             <properties>
                 <property name="Discriminate text case" value="true"/>

@@ -315,11 +315,20 @@ public final class AnalyzerComponentBuilder<A extends Analyzer<?>> extends
 
         final ComponentRequirement componentRequirement = new AnalysisJobImmutabilizer().load(
                 getComponentRequirement());
-        final String name = (getName() != null) ? getName() : componentRequirement.getSimpleName();
-        final ImmutableAnalyzerJob job = new ImmutableAnalyzerJob(name, getDescriptor(),
-                new ImmutableComponentConfiguration(jobProperties), componentRequirement, metadataProperties,
-                outputDataStreamJobs);
+        final ImmutableAnalyzerJob job = new ImmutableAnalyzerJob(getNameForAnalyzerJob(componentRequirement), 
+                getDescriptor(), new ImmutableComponentConfiguration(jobProperties), componentRequirement, 
+                metadataProperties, outputDataStreamJobs);
         return job;
+    }
+    
+    private String getNameForAnalyzerJob(ComponentRequirement componentRequirement) {
+        if (getName() != null && !getName().isEmpty()) {
+            return getName();
+        } else if (componentRequirement != null) {
+            return componentRequirement.getSimpleName();
+        } else {
+            return null;
+        }
     }
 
     private Object partitionValue(ConfiguredPropertyDescriptor key, Object unpartitionedValue,
