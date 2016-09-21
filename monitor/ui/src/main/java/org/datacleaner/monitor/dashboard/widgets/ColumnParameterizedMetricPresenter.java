@@ -21,8 +21,6 @@ package org.datacleaner.monitor.dashboard.widgets;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.datacleaner.monitor.shared.model.MetricGroup;
 import org.datacleaner.monitor.shared.model.MetricIdentifier;
@@ -38,7 +36,6 @@ import com.google.gwt.user.client.ui.Widget;
  * Presenter for metrics that are parameterizable by column names.
  */
 public class ColumnParameterizedMetricPresenter implements MetricPresenter {
-    private static final Logger logger = Logger.getLogger("ColumnParameterizedMetricPresenter");
     private final MetricIdentifier _metricIdentifier;
     private final List<MetricIdentifier> _activeMetrics;
     private final MetricGroup _metricGroup;
@@ -99,14 +96,9 @@ public class ColumnParameterizedMetricPresenter implements MetricPresenter {
 
     private MetricIdentifier isActiveMetric(MetricIdentifier metric) {
         for (MetricIdentifier activeMetric : _activeMetrics) {
-            logger.log(Level.SEVERE, "metric: " + metric.getId());
-            logger.log(Level.SEVERE, "activeMetric: " + activeMetric.getId());
             if (activeMetric.equalsIgnoreCustomizedDetails(metric)) {
-                logger.log(Level.SEVERE, "equals");
                 return activeMetric;
-            } else {
-                logger.log(Level.SEVERE, "not-equals");
-            }
+            } 
         }
         return null;
     }

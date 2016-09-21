@@ -21,7 +21,6 @@ package org.datacleaner.monitor.dashboard.widgets;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.datacleaner.monitor.dashboard.DashboardServiceAsync;
@@ -111,14 +110,9 @@ public class StringParameterizedMetricPresenter implements MetricPresenter {
         _panel.add(addButton);
 
         for (MetricIdentifier activeMetric : activeMetrics) {
-            logger.log(Level.SEVERE, "_metricIdentifier: " + _metricIdentifier.getId());
-            logger.log(Level.SEVERE, "activeMetric: " + activeMetric.getId());
             if (activeMetric.equalsIgnoreParameterValues(_metricIdentifier)) {
-                logger.log(Level.SEVERE, "equals");
                 addMetricPanel(activeMetric);
-            } else {
-                logger.log(Level.SEVERE, "not-equals");
-            }
+            } 
         }
 
         if (_metricPanels.isEmpty()) {
@@ -134,15 +128,9 @@ public class StringParameterizedMetricPresenter implements MetricPresenter {
 
     private MetricIdentifier isActiveMetric(MetricIdentifier metric) {
         for (MetricIdentifier activeMetric : _activeMetrics) {
-            logger.log(Level.SEVERE, "metric: " + metric.getId());
-            logger.log(Level.SEVERE, "activeMetric: " + activeMetric.getId());
-            //if (activeMetric.equalsIgnoreCustomizedDetails(metric)) {
-            if (activeMetric.getId().equals(metric.getId())) {
-                logger.log(Level.SEVERE, "equals");
+            if (activeMetric.equalsIgnoreCustomizedDetails(metric)) {
                 return activeMetric;
-            } else {
-                logger.log(Level.SEVERE, "not-equals");
-            }
+            } 
         }
         return null;
     }

@@ -54,6 +54,7 @@ public abstract class AbstractAnalysisResult implements AnalysisResult {
     @Override
     public AnalyzerResult getResult(ComponentJob queryComponentJob) {
         final Map<ComponentJob, AnalyzerResult> resultMap = getResultMap();
+         // mytodo: here is the problem
         AnalyzerResult analyzerResult = resultMap.get(queryComponentJob);
         if (analyzerResult == null && queryComponentJob instanceof AnalyzerJob) {
             final AnalyzerJob queryAnalyzerJob = (AnalyzerJob) queryComponentJob;
