@@ -315,7 +315,8 @@ public final class AnalyzerComponentBuilder<A extends Analyzer<?>> extends
 
         final ComponentRequirement componentRequirement = new AnalysisJobImmutabilizer().load(
                 getComponentRequirement());
-        final ImmutableAnalyzerJob job = new ImmutableAnalyzerJob(getName(), getDescriptor(),
+        final String name = (getName() != null) ? getName() : componentRequirement.getSimpleName();
+        final ImmutableAnalyzerJob job = new ImmutableAnalyzerJob(name, getDescriptor(),
                 new ImmutableComponentConfiguration(jobProperties), componentRequirement, metadataProperties,
                 outputDataStreamJobs);
         return job;
