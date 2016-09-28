@@ -46,11 +46,13 @@ import org.datacleaner.api.Configured;
 import org.datacleaner.api.Description;
 import org.datacleaner.api.HasAnalyzerResult;
 import org.datacleaner.api.HasLabelAdvice;
+import org.datacleaner.api.HasOutputDataStreams;
 import org.datacleaner.api.Initialize;
 import org.datacleaner.api.InputColumn;
 import org.datacleaner.api.InputRow;
 import org.datacleaner.api.MappedProperty;
 import org.datacleaner.api.OutputColumns;
+import org.datacleaner.api.OutputDataStream;
 import org.datacleaner.api.OutputRowCollector;
 import org.datacleaner.api.Provided;
 import org.datacleaner.api.SchemaProperty;
@@ -61,11 +63,15 @@ import org.datacleaner.components.categories.ImproveSuperCategory;
 import org.datacleaner.components.categories.ReferenceDataCategory;
 import org.datacleaner.connection.Datastore;
 import org.datacleaner.connection.DatastoreConnection;
+import org.datacleaner.job.builder.AnalysisJobBuilder;
+import org.datacleaner.job.output.OutputDataStreamBuilder;
+import org.datacleaner.job.output.OutputDataStreams;
 import org.datacleaner.result.CategorizationResult;
 import org.datacleaner.storage.DummyRowAnnotationFactory;
 import org.datacleaner.storage.RowAnnotation;
 import org.datacleaner.storage.RowAnnotationFactory;
 import org.datacleaner.util.CollectionUtils2;
+import org.datacleaner.util.SourceColumnFinder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +86,8 @@ import com.google.common.cache.Cache;
 @Description("Perform a lookup based on a table in any of your registered datastore (like a LEFT join).")
 @Concurrent(true)
 @Categorized(superCategory = ImproveSuperCategory.class, value = ReferenceDataCategory.class)
-public class TableLookupTransformer implements Transformer, HasLabelAdvice, HasAnalyzerResult<CategorizationResult> {
+public class TableLookupTransformer implements Transformer, HasLabelAdvice, HasAnalyzerResult<CategorizationResult>,
+        HasOutputDataStreams {
 
     private static final Logger logger = LoggerFactory.getLogger(TableLookupTransformer.class);
 
@@ -180,12 +187,17 @@ public class TableLookupTransformer implements Transformer, HasLabelAdvice, HasA
     @Provided
     RowAnnotation _cached;
 
+    @Inject
+    @Provided
+    AnalysisJobBuilder _analysisJobBuilder;
+
     private final Cache<List<Object>, Object[]> cache = CollectionUtils2.<List<Object>, Object[]> createCache(10000,
             5 * 60);
     private Column[] queryOutputColumns;
     private Column[] queryConditionColumns;
     private DatastoreConnection datastoreConnection;
     private CompiledQuery lookupQuery;
+    private OutputRowCollector _outputRowCollector;
 
     /**
      * Default constructor
@@ -203,7 +215,6 @@ public class TableLookupTransformer implements Transformer, HasLabelAdvice, HasA
      * @param conditionColumns
      * @param conditionValues
      * @param outputColumns
-     * @param joinSemantic
      * @param cacheLookups
      */
     public TableLookupTransformer(Datastore datastore, String schemaName, String tableName, String[] conditionColumns,
@@ -483,5 +494,26 @@ public class TableLookupTransformer implements Transformer, HasLabelAdvice, HasA
             categories.put("Cached", _cached);
         }
         return new CategorizationResult(_annotationFactory, categories);
+    }
+
+    @Override
+    public OutputDataStream[] getOutputDataStreams() {
+        if(joinSemantic == JoinSemantic.INNER_JOIN) {
+            final OutputDataStreamBuilder outputDataStreamBuilder = OutputDataStreams.pushDataStream("Joined rows");
+            final SourceColumnFinder sourceColumnFinder = new SourceColumnFinder();
+            sourceColumnFinder.addSources(_analysisJobBuilder);
+            _analysisJobBuilder.getSourceColumns().forEach(outputDataStreamBuilder::withColumnLike);
+
+            // TODO: Add columns from other datastore
+
+            return new OutputDataStream[] { outputDataStreamBuilder.toOutputDataStream() };
+        }
+        return new OutputDataStream[] {};
+    }
+
+    @Override
+    public void initializeOutputDataStream(final OutputDataStream outputDataStream, final Query query,
+            final OutputRowCollector outputRowCollector) {
+        _outputRowCollector = outputRowCollector;
     }
 }
